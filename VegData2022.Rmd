@@ -1,0 +1,221 @@
+---
+title: "VegData2022"
+output: html_document
+date: "2023-09-06"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading libraries
+```{r}
+library(readxl)
+library(lubridate)
+```
+
+Importing and cleaning data
+```{r}
+#### Veg Data 2022 ####
+
+vegdata2022 <- read_xlsx("/Volumes/Samsung_T5/BOBWHITE_DATA/Clean/VegSurveys2022.xlsx") %>%
+  janitor::clean_names() %>%
+  mutate(date = as.Date(date))
+
+str(vegdata2022)
+
+vegdata2022 %>%
+  view()
+```
+
+Creating a days since fire (DSF) column.
+```{r}
+start_date <- ymd("2022-04-11")
+
+vegdata2022$dsf <- as.numeric(vegdata2022$date - start_date)
+```
+
+Plotting 2022 DSF vs height
+```{r}
+vegdata2022 %>%
+  ggplot(aes(dsf, max_grasses_cm)) +
+  geom_point(size = 0.5) +
+  geom_smooth() +
+  labs(x = "DSF",
+       y = "Max height grasses (cm)",
+       title = "Height of grasses following prescribed fire, 2022",
+       subtitle = "Burned 11 April 2022") + 
+  facet_wrap(~ unit) +
+  theme_minimal()
+
+vegdata2022 %>%
+  ggplot(aes(dsf, max_forbs_cm)) +
+  geom_point(size = 0.5) +
+  geom_smooth() +
+  labs(x = "DSF",
+       y = "Max height forbs (cm)",
+       title = "Height of forbs following prescribed fire, 2022",
+       subtitle = "Burned 11 April 2022") + 
+  facet_wrap(~ unit) +
+  theme_minimal()
+
+vegdata2022 %>%
+  ggplot(aes(dsf, max_shrubs_cm)) +
+  geom_point(size = 0.5) +
+  geom_smooth() +
+  labs(x = "DSF",
+       y = "Max height shrubs (cm)",
+       title = "Height of shrubs following prescribed fire, 2022",
+       subtitle = "Burned 11 April 2022") + 
+  facet_wrap(~ unit) +
+  theme_minimal()
+```
+
+
+Summarizing 2022 veg data by dsf and burn unit
+```{r}
+vegdata2022_summary <- vegdata2022 %>%
+  group_by(unit, dsf) %>%
+  summarize(mean_perc_grasses = mean(percent_grasses),
+            mean_perc_forbs = mean(percent_forbs),
+            mean_perc_shrubs = mean(percent_shrubs),
+            mean_cm_grasses = mean(max_grasses_cm),
+            mean_cm_forbs = mean(max_forbs_cm),
+            mean_cm_shrubs = mean(max_shrubs_cm))
+
+vegdata2022_summary %>%
+  ggplot(aes(dsf, mean_cm_grasses)) + 
+  geom_smooth() +
+   labs(x = "DSF",
+       y = "Max height grasses (cm)",
+       title = "Height of grasses following prescribed fire, 2022",
+       subtitle = "Burned 11 April 2022") + 
+  theme_minimal()
+
+vegdata2022_summary %>%
+  ggplot(aes(dsf, mean_cm_forbs)) + 
+  geom_smooth() +
+   labs(x = "DSF",
+       y = "Max height forbs (cm)",
+       title = "Height of forbs following prescribed fire, 2022",
+       subtitle = "Burned 11 April 2022") + 
+  theme_minimal()
+
+vegdata2022_summary %>%
+  ggplot(aes(dsf, mean_cm_shrubs)) + 
+  geom_smooth() +
+   labs(x = "DSF",
+       y = "Max height shrubs (cm)",
+       title = "Height of shrubs following prescribed fire, 2022",
+       subtitle = "Burned 11 April 2022") + 
+  theme_minimal()
+```
+
+
+Importing 2023 data
+```{r}
+#### Veg Data 2023 ####
+
+vegdata2023 <- read_xlsx("/Volumes/Samsung_T5/BOBWHITE_DATA/Clean/VegSurveys2023.xlsx") %>%
+  janitor::clean_names() %>%
+  mutate(date = as.Date(date))
+
+str(vegdata2023)
+
+vegdata2023 %>%
+  view()
+```
+
+Adding dsf (days since fire column). A little trickier, since unit 6 was burned on a different date.
+```{r}
+# Assigning start dates to burn units
+start_date_units_1_to_5 <- ymd("2023-03-21")
+start_date_unit_6 <- ymd("2023-04-17") 
+
+vegdata2023 <- vegdata2023 %>%
+  mutate(dsf = case_when(
+    unit %in% 1:5 ~ as.numeric(date - start_date_units_1_to_5),
+    unit == 6 ~ as.numeric(date - start_date_unit_6),
+  ))
+
+vegdata2023 %>%
+  view()
+```
+
+plotting 2023 DSF vs height
+```{r}
+vegdata2023 %>%
+  ggplot(aes(dsf, max_grasses_cm)) +
+  geom_point(size = 0.5) +
+  geom_smooth() +
+  labs(x = "DSF",
+       y = "Max height grasses (cm)",
+       title = "Height of grasses following prescribed fire, 2023",
+       subtitle = "Units 1-5 burned 21 March 2023, unit 6 burned 17 April 2023") + 
+  facet_wrap(~ unit) +
+  theme_minimal()
+
+vegdata2023 %>%
+  ggplot(aes(dsf, max_forbs_cm)) +
+  geom_point(size = 0.5) +
+  geom_smooth() +
+  labs(x = "DSF",
+       y = "Max height forbs (cm)",
+       title = "Height of forbs following prescribed fire, 2023",
+       subtitle = "Units 1-5 burned 21 March 2023, unit 6 burned 17 April 2023") + 
+  facet_wrap(~ unit) +
+  theme_minimal()
+
+vegdata2023 %>%
+  ggplot(aes(dsf, max_shrubs_cm)) +
+  geom_point(size = 0.5) +
+  geom_smooth() +
+  labs(x = "DSF",
+       y = "Max height shrubs (cm)",
+       title = "Height of shrubs following prescribed fire, 2023",
+       subtitle = "Units 1-5 burned 21 March 2023, unit 6 burned 17 April 2023") + 
+  facet_wrap(~ unit) +
+  theme_minimal()
+```
+
+Smmarizing 2023 data
+```{r}
+vegdata2023_summary <- vegdata2023 %>%
+  group_by(unit, dsf) %>%
+  summarize(mean_perc_grasses = mean(percent_grasses),
+            mean_perc_forbs = mean(percent_forbs),
+            mean_perc_shrubs = mean(percent_shrubs),
+            mean_cm_grasses = mean(max_grasses_cm),
+            mean_cm_forbs = mean(max_forbs_cm),
+            mean_cm_shrubs = mean(max_shrubs_cm))
+
+vegdata2023_summary %>%
+  ggplot(aes(dsf, mean_cm_grasses)) + 
+  geom_smooth() +
+   labs(x = "DSF",
+       y = "Max height grasses (cm)",
+       title = "Height of grasses following prescribed fire, 2023",
+       subtitle = "Units 1-5 burned 21 March 2023, unit 6 burned 17 April 2023") + 
+  theme_minimal()
+
+vegdata2023_summary %>%
+  ggplot(aes(dsf, mean_cm_forbs)) + 
+  geom_smooth() +
+   labs(x = "DSF",
+       y = "Max height forbs (cm)",
+       title = "Height of forbs following prescribed fire, 2023",
+       subtitle = "Units 1-5 burned 21 March 2023, unit 6 burned 17 April 2023") + 
+  theme_minimal()
+
+vegdata2023_summary %>%
+  ggplot(aes(dsf, mean_cm_shrubs)) + 
+  geom_smooth() +
+   labs(x = "DSF",
+       y = "Max height shrubs (cm)",
+       title = "Height of shrubs following prescribed fire, 2023",
+       subtitle = "Units 1-5 burned 21 March 2023, unit 6 burned 17 April 2023") + 
+  theme_minimal()
+```
+
